@@ -266,7 +266,7 @@ async def skip_count_input(client, message):
             await app.send_message(user_id, 'Please enter a non-negative number of messages to skip.')
 
 async def start_forwarding(client, user_id, course_name, skip_count, start_message_id, end_message_id):
-    delay_time = 0.001  # Adjust the delay time as needed (in seconds)
+    delay_time = 0  # Adjust the delay time as needed (in seconds)
     channel_id = -1001902376170  # Replace with your channel ID
 
     if start_message_id > end_message_id:
@@ -276,24 +276,25 @@ async def start_forwarding(client, user_id, course_name, skip_count, start_messa
     forwarding_users[str(user_id)] = {'courseName': course_name, 'skipCount': skip_count, 'messageId': start_message_id, 'timeout': None}
 
     async def forwarding_loop():
-    nonlocal start_message_id  # Declare start_message_id as nonlocal to modify it in the inner function
-    if str(user_id) in forwarding_users:
-        try:
-            original_message = await client.get_messages(channel_id, start_message_id)
-            await client.send_message(user_id, original_message.text, reply_markup=original_message.reply_markup)
-            print(f'Forwarded message {start_message_id} to user {user_id}')
-            start_message_id += 1
+        nonlocal start_message_id  # Declare start_message_id as nonlocal to modify it in the inner function
+        if str(user_id) in forwarding_users:
+            try:
+                original_message = await client.get_messages(channel_id, start_message_id)
+                await client.send_message(user_id, original_message.text, reply_markup=original_message.reply_markup)
+                print(f'Forwarded message {start_message_id} to user {user_id}')
+                start_message_id += 1
 
-            if start_message_id <= end_message_id:
-                forwarding_users[str(user_id)]['timeout'] = await asyncio.sleep(delay_time)
-                await forwarding_loop()  # Continue forwarding after the delay
-            else:
-                del forwarding_users[str(user_id)]
-                await client.send_message(user_id, f'Forwarded messages for {course_name}')
-        except Exception as e:
-            print(f'Error forwarding message {start_message_id}: {str(e)}')
+                if start_message_id <= end_message_id:
+                    forwarding_users[str(user_id)]['timeout'] = await asyncio.sleep(delay_time)
+                    await forwarding_loop()  # Continue forwarding after the delay
+                else:
+                    del forwarding_users[str(user_id)]
+                    await client.send_message(user_id, f'Forwarded messages for {course_name}')
+            except Exception as e:
+                print(f'Error forwarding message {start_message_id}: {str(e)}')
 
     await forwarding_loop()
+
 
     
     
